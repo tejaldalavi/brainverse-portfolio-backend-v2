@@ -1,9 +1,9 @@
 const mysql = require("mysql2/promise");
 const pool = mysql.createPool({
-    host: "ec-admin-panel.cmhf16rklpnh.eu-north-1.rds.amazonaws.com",
-    user: "ecadmin",
-    password: "EcAdminDB321",
-    database: "ecAdminPanel",
+    host: "193.203.184.105",
+    user: "u751920449_sample_portal",
+    password: "8j:UeTfbTfHK",
+    database: "u751920449_sample_portal",
 });
 
 module.exports = pool;
