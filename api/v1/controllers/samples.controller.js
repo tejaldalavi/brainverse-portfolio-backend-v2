@@ -1,19 +1,15 @@
-const { createAllowances } = require("../services/samples.service")
-const getUserSamplesController = async(request, response) => {
+import {
+  listFiles,
+} from "../services/samples.service.js";
 
-    // try {
-    //     const result = await createAllowances(request);
+// If you want to expose absolute URLs for returned FTP paths, set a base here:
+const BASE_PUBLIC_URL = process.env.SAMPLES_BASE_URL || "https://ecornertech.com/samples";
 
-    //     if (typeof (result) != 'object') {
-    //         response.status(500).json({ message: "Internal Server Error" });
-    //     }
-    //     else {
-    //         response.status(200).json({ "Data Inserted": result });
-    //     }
-    // } catch (error) {
-    //     response.status(500).json({ message: "Internal Server Error" });
-    // }
-    response.status(200).json({ "getUserSamplesController ": "result" });
-}
-
-module.exports = { getUserSamplesController }
+export const listFilesController = async (_req, res) => {
+  try {
+    const files = await listFiles();
+    res.json({ files });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

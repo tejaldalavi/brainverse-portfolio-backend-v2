@@ -1,4 +1,4 @@
-const pool = require("../config/database");
+const pool = require("../config/database").default;
 const moment = require("moment");
 const getCurrentDate = () => {
         const objectDate = new Date();

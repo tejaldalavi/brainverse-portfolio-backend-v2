@@ -1,32 +1,39 @@
-const pool = require("../../config/database");
-const { getCurrentDate } = require("../utils");
-const JWT = require("jsonwebtoken");
-const JWT_SECRET = "ecorner";
-const createAt = getCurrentDate();
-const updatedAt = getCurrentDate();
+import ftp from "basic-ftp";
 
-const createAllowances = async (request) => {
-  //   const { name, category } = request.body;
-  //   const { authorization } = request.headers;
-  //   const isVerified = JWT.verify(authorization, JWT_SECRET);
-  //   if (isVerified) {
-  //     if (!name || !category) {
-  //       return "All fields are required";
-  //     }
-  //     try {
-  //       const SQL = `INSERT INTO  allowances (name,category,createdAt,updatedAt) values("${name}","${category}","${createAt}","${updatedAt}");`;
-  //       const createResult = await pool.query(SQL);
-
-  //       const getSQL = `SELECT * FROM allowances WHERE id=${createResult[0].insertId}`;
-  //       const result = await pool.query(getSQL);
-  //       return result[0];
-  //     } catch (error) {
-  //       return JSON.stringify(error);
-  //     }
-  //   } else {
-  //     return "Invalid token";
-  //   }
-  return "createAllowances returned successffully";
+export const createFtpClient = async () => {
+  const client = new ftp.Client();
+  client.ftp.verbose = false;
+  try {
+    await client.access({
+      host: process.env.FTP_HOST,
+      port: process.env.FTP_PORT || 21,
+      user: process.env.FTP_USER,
+      password: process.env.FTP_PASSWORD,
+      secure: false,
+    });
+    return client;
+  } catch (err) {
+    throw new Error("FTP connection failed: " + err.message);
+  }
 };
 
-module.exports = { createAllowances };
+export const listFiles = async () => {
+  const client = await createFtpClient();
+  try {
+    const root = process.env.FTP_ROOT || "/";
+    await client.ensureDir(root);
+    const list = await client.list(root);
+    await client.close();
+    return list.map((file) => ({
+      name: file.name,
+      type: file.isDirectory ? "directory" : "file",
+      size: file.size,
+      modifiedAt: file.modifiedAt,
+    }));
+  } catch (err) {
+    await client.close();
+    throw new Error("Failed to list files: " + err.message);
+  }
+};
+
+
