@@ -32,6 +32,6 @@ const sampleRoutes = require('./api/v1/routes/samples.routes')
 app.use("/", sampleRoutes);
 
 
-app.listen("3306", () => {
-    console.info(`Server listening at 3306 `);
+app.listen("3307", () => {
+    console.info(`Server listening at 3307 `);
 });
