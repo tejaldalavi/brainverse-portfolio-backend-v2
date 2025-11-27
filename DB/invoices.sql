@@ -1,0 +1,23 @@
+CREATE TABLE `invoices` (
+  `id` bigint NOT NULL,
+  `invoiceTypeId` int NOT NULL,
+  `issuedDate` varchar(50) NOT NULL,
+  `dueDate` varchar(50) NOT NULL,
+  `projectId` int NOT NULL,
+  `subTotal` int NOT NULL,
+  `sgst` int NOT NULL,
+  `cgst` int NOT NULL,
+  `igst` int NOT NULL,
+  `tds` int NOT NULL,
+  `paymentStatus` int NOT NULL,
+  `gstStatus` int NOT NULL,
+  `partailRecieved` int NOT NULL,
+  `total` int NOT NULL,
+  `createdAt` varchar(50) NOT NULL,
+  `updatedAt` varchar(50) NOT NULL,
+  `invoiceStatus` int NOT NULL,
+  `invoiceAmount` int NOT NULL DEFAULT '0',
+  `customProjectName` varchar(250) DEFAULT NULL,
+  `clientId` int DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) 
