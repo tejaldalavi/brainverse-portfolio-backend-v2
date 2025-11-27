@@ -1,16 +1,18 @@
 import ftp from "basic-ftp";
 
 export const createFtpClient = async () => {
-  const client = new ftp.Client();
-  client.ftp.verbose = false;
+  const client = new ftp.Client(30000);
+  client.ftp.verbose = true;
   try {
     await client.access({
       host: process.env.FTP_HOST,
-      port: process.env.FTP_PORT || 21,
+      port: process.env.FTP_PORT ? Number(process.env.FTP_PORT) : 21,
       user: process.env.FTP_USER,
       password: process.env.FTP_PASSWORD,
       secure: false,
+      secureOptions: undefined,    
     });
+    client.ftp.passive = true;
     return client;
   } catch (err) {
     throw new Error("FTP connection failed: " + err.message);
@@ -21,7 +23,7 @@ export const listFiles = async () => {
   const client = await createFtpClient();
   try {
     const root = process.env.FTP_ROOT || "/";
-    await client.ensureDir(root);
+    await client.cd(root);
     const list = await client.list(root);
     await client.close();
     return list.map((file) => ({
