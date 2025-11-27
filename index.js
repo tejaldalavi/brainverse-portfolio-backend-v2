@@ -9,7 +9,7 @@ app.use(express.json());
 app.use(morgan("combined"));
 app.use(express.urlencoded({ extended: true }));
 
-var whitelist = ['http://localhost:5173',"http://127.0.0.1:5173/", "http://localhost:3306", "https://ecorner-admin-frontend.vercel.app", "https://bold-moon-180173.postman.co/", "http://portal.ecornertech.com, https://brainverse-portfolio-backend-v2-qlvxf7ffo.vercel.app/"]
+var whitelist = ['http://localhost:5173',"http://127.0.0.1:5173/", "http://localhost:3306", "https://ecorner-admin-frontend.vercel.app", "https://bold-moon-180173.postman.co/", "http://portal.ecornertech.com, https://brainverse-portfolio-backend-v2.vercel.app"]
 app.use(
     cors({
         origin: (origin, callback) => {
