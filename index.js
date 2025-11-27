@@ -34,7 +34,7 @@ app.use(
 );
 
 import sampleRoutes from "./api/v1/routes/samples.routes.js";
-app.use("/fpt", sampleRoutes);
+app.use("/ftp", sampleRoutes);
 
 app.listen("3307", () => {
     console.info(`Server listening at 3307`);
