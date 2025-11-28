@@ -2,6 +2,8 @@ import express from "express";
 import morgan from "morgan";
 import cors from "cors";
 import errorHandler from "express-error-handler";
+import dotenv from "dotenv";
+dotenv.config();
 
 const app = express();
 
