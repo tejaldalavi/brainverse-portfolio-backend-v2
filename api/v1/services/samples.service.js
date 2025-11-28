@@ -38,4 +38,18 @@ export const listFiles = async () => {
   }
 };
 
+/** Get details for files within a given path (relative to root) */
+export const getFileDetails = async (pathRelativeToRoot) => {
+  const client = await createFtpClient();
+  try {
+    const root = process.env.FTP_ROOT || "/";
+    await client.ensureDir(root);
+    const files = await client.list(`${pathRelativeToRoot}`);
+    await client.close();
+    return files;
+  } catch (err) {
+    await client.close();
+    throw new Error("Error getting file info: " + err.message);
+  }
+};
 
