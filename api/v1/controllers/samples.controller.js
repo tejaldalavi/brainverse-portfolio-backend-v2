@@ -2,6 +2,9 @@ import {
   listFiles, 
   getFileDetails, 
   uploadFile,
+  deleteFile,
+  extractZip,
+  uploadAndExtract,
 } from "../services/samples.service.js";
 
 // Base URL for constructing public links if needed
@@ -56,5 +59,70 @@ export const uploadController = async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+};
+
+export const deleteController = async (req, res) => {
+  try {
+    const filename = req.query.name;
+    if (!filename) throw new Error("Missing file name");
+    const result = await deleteFile(filename);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+export const extractController = async (req, res) => {
+  try {
+    const { zipName } = req.body;
+    if (!zipName) throw new Error("Missing zipName");
+
+    const result = await extractZip(zipName);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Upload a .zip (buffer) → trigger remote extract → list extracted files
+export const uploadAndExtractController = async (req, res) => {
+  try {
+    const file = req.file;
+    if (!file) throw new Error("No file uploaded");
+
+    // Upload buffer then extract remotely (.zip required)
+    const result = await uploadAndExtract(file, file.originalname, "zip");
+
+    // After extraction, list extracted files under zip/<folderName>
+    const folderName = file.originalname.replace(/\.zip$/i, "");
+    const allFiles = await getFileDetails(`zip/${folderName}`);
+    // basic-ftp returns type 1 for files; if your shape differs, adjust filter:
+    const filteredFiles = (allFiles || []).filter((f) => f.type === 1);
+
+    const filesWithUrl = filteredFiles.map((f) => {
+      const rel = `zip/${folderName}/${f.name}`;
+      return {
+        name: f.name,
+        size: f.size,
+        path: rel,
+        url: `${BASE_PUBLIC_URL}/${rel}`.replace(/\/{2,}/g, "/")
+      };
+    });
+
+    res.json({
+      success: true,
+      message: "Uploaded → Extracted → ZIP Deleted → Files listed",
+      upload: result.upload,
+      extract: result.extract,
+      deletedZip: result.deletedZip,
+      files: filesWithUrl
+    });
+  } catch (err) {
+    console.error("Upload and extract error:", err);
+    res.status(500).json({
+      success: false,
+      error: err.message || "Something went wrong during upload/extract"
+    });
   }
 };

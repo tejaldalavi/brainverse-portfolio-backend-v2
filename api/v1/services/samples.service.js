@@ -1,8 +1,8 @@
 import ftp from "basic-ftp";
 // import db from "../config/db.js";
-// import axios from "axios";
+import axios from "axios";
 // import dotenv from "dotenv";
-// import FormData from "form-data";
+import FormData from "form-data";
 import { Readable } from "stream";
 
 export const createFtpClient = async () => {
@@ -64,41 +64,6 @@ export const getFileDetails = async (pathRelativeToRoot) => {
  * @param {string} remoteFileName - final filename on FTP (e.g., "my.zip")
  * @param {string} folder - subfolder under FTP_ROOT (default: "zip")
  */
-// export const uploadFile = async (file, remoteFileName, folder = "zip") => {
-//   const client = await createFtpClient();
-//   try {
-//     // const root = process.env.FTP_ROOT || "";  // Hostinger uses "" as root
-//     const root = process.env.FTP_ROOT || "";
-//     await client.ensureDir(`${root}/zip`);
-
-//     const dir = `${root}${folder}`;   // becomes: "zip"
-
-//     // Ensure "zip" exists
-//     await client.ensureDir(dir);
-
-//     // Check duplicate
-//     const existing = await client.list(dir);
-//     if (existing.some(f => f.name === remoteFileName)) {
-//       throw new Error("File already exists on the server");
-//     }
-
-//     // Upload file: "zip/filename.ext"
-//     const uploadPath = `${dir}/${remoteFileName}`;
-//     await client.uploadFrom(Readable.from(file.buffer), uploadPath);
-
-//     await client.close();
-
-//     return {
-//       success: true,
-//       message: "File uploaded successfully",
-//       file: uploadPath,
-//     };
-//   } catch (err) {
-//     await client.close();
-//     throw new Error("Upload failed: " + err.message);
-//   }
-// };
-
 export const uploadFile = async (file, remoteFileName, folder = "zip") => {
   const client = await createFtpClient();
   try {
@@ -135,5 +100,51 @@ export const uploadFile = async (file, remoteFileName, folder = "zip") => {
   }
 };
 
+/** Delete a file or directory under FTP_ROOT/zip */
+export const deleteFile = async (filename) => {
+  const client = await createFtpClient();
+  try {
+    const root = process.env.FTP_ROOT || "/";
+    const remotePath = `${root}/zip/${filename}`.replace(/\/{2,}/g, "/");
+    // Try deleting as file first; fallback to directory
+    await client.remove(remotePath).catch(async () => {
+      await client.removeDir(remotePath);
+    });
+    await client.close();
+    return { success: true, message: "Deleted successfully" };
+  } catch (err) {
+    await client.close();
+    throw new Error("Delete failed: " + err.message);
+  }
+};
 
+/** Call your remote PHP unzipper to extract a zip already present on FTP */
+export const extractZip = async (zipName) => {
+  try {
+    const phpUrl = process.env.EXTRACT_PHP_URL;
+    const form = new FormData();
+    form.append("zipName", zipName); // e.g., "my.zip"
+    const response = await axios.post(phpUrl, form, { headers: form.getHeaders() });
+    return response.data;
+  } catch (err) {
+    throw new Error("Extraction failed: " + err.message);
+  }
+};
+
+/**
+ * Upload a buffer and then trigger extraction on remote (zipName = remoteFileName)
+ * @param {Express.Multer.File} file
+ * @param {string} remoteFileName - must end with .zip for extraction to work
+ * @param {string} folder - default "zip"
+ */
+export const uploadAndExtract = async (file, remoteFileName, folder = "zip") => {
+  if (!/\.zip$/i.test(remoteFileName)) {
+    throw new Error("uploadAndExtract expects a .zip file name");
+  }
+
+  const uploadResult = await uploadFile(file, remoteFileName, folder);
+  const extractResult = await extractZip(remoteFileName); // your PHP expects just the filename
+  const deleteResult = await deleteFile(remoteFileName);
+  return { upload: uploadResult, extract: extractResult, deletedZip: deleteResult, };
+};
 
