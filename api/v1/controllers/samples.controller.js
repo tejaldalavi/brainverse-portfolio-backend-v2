@@ -1,7 +1,7 @@
 import { 
   listFiles, 
   getFileDetails, 
-
+  uploadFile,
 } from "../services/samples.service.js";
 
 // Base URL for constructing public links if needed
@@ -33,6 +33,27 @@ export const getFileController = async (req, res) => {
     if (!filename) throw new Error("Missing file name");
     const file = await getFileDetails(filename);
     res.json(file);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Upload a file (buffer) to FTP into "zip/" (or any folder you pass)
+export const uploadController = async (req, res) => {
+  try {
+    const file = req.file;
+    if (!file) throw new Error("No file uploaded");
+
+    // buffer-based upload (no disk)
+    const result = await uploadFile(file, file.originalname, "zip");
+    // result.file is the remote path like "zip/filename.ext"
+
+    res.json({
+      success: true,
+      message: "File uploaded successfully",
+      path: result.file,
+      url: `${BASE_PUBLIC_URL}/${result.file}`.replace(/\/{2,}/g, "/")
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
