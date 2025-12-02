@@ -14,12 +14,14 @@ app.use(express.urlencoded({ extended: true }));
 var whitelist = [
     "http://localhost:5173",
     "http://127.0.0.1:5173/",
+    "http://127.0.0.1:5173",
     "http://localhost:3306",
     "http://localhost:3307",
     "http://localhost:3000",
     "https://ecorner-admin-frontend.vercel.app",
     "https://bold-moon-180173.postman.co/",
-    "https://brainverse-portfolio-backend-v2.vercel.app"
+    "https://brainverse-portfolio-backend-v2.vercel.app",
+    "https://brainverse-portfolio.vercel.app",
 ];
 
 app.use(
