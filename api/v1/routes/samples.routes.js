@@ -11,8 +11,18 @@ import {
     uploadVideoController,
     deleteVideoController,
     deleteFileController,
+    createSampleController,
+    getAllAdminSamplesController,
+    deletecreatesampleController,
+    updatesampledisplayController,
+    getUserSamplesController,
+    createUsersController,
+    getAllUsersController,
+    deleteUserController,
+    updateUserController,
 } from "../controllers/samples.controller.js";
 
+import { verifyToken, isAdmin } from "../middleware/authMiddleware.js";
 import { memoryUpload } from "../middleware/upload.js"; // uses multer.memoryStorage()
 
 const router = express.Router();
@@ -89,5 +99,27 @@ router.delete("/delete-video", deleteVideoController, (req, res) => {
 
 // bulk delete
 router.post("/delete-files", deleteFileController);
+
+//create samples
+router.post("/create-sample", verifyToken, isAdmin, createSampleController);
+router.get(
+  "/get-admin-samples",
+  verifyToken,
+  isAdmin,
+  getAllAdminSamplesController
+);
+router.get("/get-user-samples", getUserSamplesController);
+router.delete("/samples/:id", deletecreatesampleController);
+router.put("/update-sample-display/", updatesampledisplayController);
+
+//create users
+router.post("/create-user", verifyToken, isAdmin, createUsersController);
+router.get("/get-users", verifyToken, isAdmin, getAllUsersController);
+router.delete("/users/:id", deleteUserController);
+router.put("/update/:id", verifyToken, updateUserController);
+
+// misc
+router.get("/samples", verifyToken, getUserSamplesController);
+router.get("/", (req, res) => res.json({ message: "Welcome User" }));
 
 export default router;

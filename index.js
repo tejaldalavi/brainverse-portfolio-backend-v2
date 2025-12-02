@@ -36,7 +36,12 @@ app.use(
 );
 
 import sampleRoutes from "./api/v1/routes/samples.routes.js";
+import registerRoute from "./api/v1/routes/authresisterRoutes.js";
+import loginRoute from "./api/v1/routes/authloginRoutes.js";
+
 app.use("/ftp", sampleRoutes);
+app.use("/api", registerRoute);
+app.use("/api", loginRoute);
 
 app.listen("3307", () => {
     console.info(`Server listening at 3307`);

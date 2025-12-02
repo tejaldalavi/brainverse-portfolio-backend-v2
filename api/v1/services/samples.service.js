@@ -207,6 +207,7 @@ export const deleteFromFTP = async ({ path, type }) => {
   }
 };
 
+//create samples apis
 export const createSample = async ({
   sampleType,
   category,
@@ -219,4 +220,89 @@ export const createSample = async ({
     [sampleType, category, thumbnail, fileUrl, display]
   );
   return result;
+};
+
+export const getAllAdminSamples = async () => {
+  const [result] = await db.query("SELECT * FROM samples;");
+  return result;
+};
+
+export const deletecreatesample = async (id) => {
+  const [rows] = await db.query(
+    "SELECT sampleType, category, thumbnail, fileUrl FROM samples WHERE id = ?",
+    [id]
+  );
+
+  const mySample = rows[0];
+
+  const pathArray = mySample?.fileUrl
+    ?.replace("https://ecornertech.com/samples/", "")
+    .split("/");
+  const myPath = `${pathArray[0]}/${pathArray[1]}`;
+
+  await deleteFromFTP({ path: mySample?.thumbnail, type: "file" });
+  await deleteFromFTP({
+    path: myPath,
+    type: mySample?.sampleType === "ZIP" ? "dir" : "file",
+  });
+
+  await db.query("DELETE FROM samples WHERE id = ?", [id]);
+
+  return { success: true, message: "Sample deleted" };
+};
+
+export const updatesampledisplay = async ({ id, display }) => {
+  const result = await db.query(
+    `UPDATE samples SET display = ${display} WHERE id=${id};`
+  );
+  return result;
+};
+
+export const getUserSamples = async () => {
+  const [result] = await db.query(
+    "SELECT * FROM samples WHERE display = 1 ORDER BY createdAt DESC;"
+  );
+  return result;
+};
+
+// create users apis
+export const createUsers = async ({ name, email, password }) => {
+  const [result] = await db.query(
+    "INSERT INTO users (name, email, password, createdAt, lastlogin) VALUES (?, ?, ?, NOW(), NOW())",
+    [name, email, password]
+  );
+  return result;
+};
+
+export const getAllUsers = async () => {
+  const [result] = await db.query("SELECT * FROM users;");
+  return result;
+};
+
+export const deleteUser = async (id) => {
+  await db.query("DELETE FROM users WHERE id = ?", [id]);
+  return { success: true, message: "User deleted" };
+};
+
+export const updateUser = async (id, fieldsToUpdate) => {
+  const fields = [];
+  const values = [];
+
+  if (fieldsToUpdate.name) {
+    fields.push("name = ?");
+    values.push(fieldsToUpdate.name);
+  }
+  if (fieldsToUpdate.email) {
+    fields.push("email = ?");
+    values.push(fieldsToUpdate.email);
+  }
+  if (fieldsToUpdate.password) {
+    fields.push("password = ?");
+    values.push(fieldsToUpdate.password);
+  }
+
+  values.push(id);
+  const sql = `UPDATE users SET ${fields.join(", ")} WHERE id = ?`;
+  const [rows] = await db.query(sql, values);
+  return rows;
 };

@@ -7,6 +7,15 @@ import {
   uploadAndExtract,
   uploadToFTP,
   deleteFromFTP,
+  createSample,
+  getAllAdminSamples,
+  deletecreatesample,
+  updatesampledisplay,
+  getUserSamples,
+  createUsers,
+  getAllUsers,
+  deleteUser,
+  updateUser,
 } from "../services/samples.service.js";
 
 // Base URL for constructing public links if needed
@@ -225,5 +234,148 @@ export const deleteFileController = async (req, res) => {
       error: "Failed to delete",
       details: err.message
     });
+  }
+};
+
+// -------------------- Samples --------------------
+
+export const createSampleController = async (req, res) => {
+  try {
+    const { sampleType, category, thumbnail, fileUrl, display } = req.body;
+    const result = await createSample({ sampleType, category, thumbnail, fileUrl, display });
+
+    res.status(200).json({
+      success: true,
+      message: "Sample saved successfully",
+      saved: result
+    });
+  } catch (err) {
+    console.error("Create Sample Error:", err);
+    res.status(500).json({
+      success: false,
+      message: "Failed to save sample",
+      error: err.message
+    });
+  }
+};
+
+export const getAllAdminSamplesController = async (_req, res) => {
+  try {
+    const files = await getAllAdminSamples();
+    res.json({ files });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+export const deletecreatesampleController = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const result = await deletecreatesample(id);
+
+    if (!result.success) {
+      return res.status(404).json(result);
+    }
+    res.json(result);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+export const updatesampledisplayController = async (req, res) => {
+  try {
+    const { id, display } = req.body || {};
+    const result = await updatesampledisplay({ id, display });
+    res.json(result);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+export const getUserSamplesController = async (_req, res) => {
+  try {
+    const files = await getUserSamples();
+    res.json({ files });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// -------------------- Users --------------------
+
+export const createUsersController = async (req, res) => {
+  try {
+    const { name, email, password, createdAt, lastlogin } = req.body;
+    const result = await createUsers({ name, email, password, createdAt, lastlogin });
+
+    res.status(200).json({
+      success: true,
+      message: "User saved successfully",
+      saved: result
+    });
+  } catch (err) {
+    console.error("Create User Error:", err);
+    res.status(500).json({
+      success: false,
+      message: "Failed to save user",
+      error: err.message
+    });
+  }
+};
+
+export const getAllUsersController = async (_req, res) => {
+  try {
+    const user = await getAllUsers();
+    res.json({ user });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+export const deleteUserController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await deleteUser(id);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({ message: "User deleted successfully" });
+  } catch (error) {
+    console.error("Delete error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const updateUserController = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const { name, email, password } = req.body;
+
+    if (!name && !email && !password) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide at least one field to update"
+      });
+    }
+
+    const fieldsToUpdate = {};
+    if (name) fieldsToUpdate.name = name;
+    if (email) fieldsToUpdate.email = email;
+    if (password) fieldsToUpdate.password = password;
+
+    const result = await updateUser(userId, fieldsToUpdate);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    res.json({ success: true, message: "User updated successfully" });
+  } catch (error) {
+    console.error("Update user error:", error);
+    res.status(500).json({ success: false, message: "Error updating user" });
   }
 };
