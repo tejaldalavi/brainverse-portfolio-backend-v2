@@ -119,7 +119,7 @@ router.delete("/users/:id", deleteUserController);
 router.put("/update/:id", verifyToken, updateUserController);
 
 // misc
-router.get("/samples", verifyToken, getUserSamplesController);
-router.get("/", (req, res) => res.json({ message: "Welcome User" }));
+// router.get("/", verifyToken, getUserSamplesController);
+// // router.get("/", (req, res) => res.json({ message: "Welcome User" }));
 
 export default router;
