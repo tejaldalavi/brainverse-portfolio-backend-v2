@@ -238,11 +238,17 @@ export const deletecreatesample = async (id) => {
   const pathArray = mySample?.fileUrl
     ?.replace("https://ecornertech.com/samples/", "")
     .split("/");
-  const myPath = `${pathArray[0]}/${pathArray[1]}`;
+  const myFolderPath = `${pathArray[0]}/${pathArray[1]}`;
 
-  await deleteFromFTP({ path: mySample?.thumbnail, type: "file" });
+    const imgPathArray = mySample?.thumbnail
+    ?.replace("https://ecornertech.com/samples/", "")
+    .split("/");
+
+    const myImagePath = `${imgPathArray[0]}/${imgPathArray[1]}`;
+
+  await deleteFromFTP({ path: myImagePath, type: "file" });
   await deleteFromFTP({
-    path: myPath,
+    path: myFolderPath,
     type: mySample?.sampleType === "ZIP" ? "dir" : "file",
   });
 
