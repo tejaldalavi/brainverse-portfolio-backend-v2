@@ -6,11 +6,38 @@ import {
     deleteController,
     extractController,
     uploadAndExtractController,
+    uploadFileController,
+    deleteThumbnailController,
+    uploadVideoController,
+    deleteVideoController,
+    deleteFileController,
 } from "../controllers/samples.controller.js";
 
 import { memoryUpload } from "../middleware/upload.js"; // uses multer.memoryStorage()
 
 const router = express.Router();
+
+import ftp from "basic-ftp";
+router.get("/ftp-root-test", async (req, res) => {
+  const client = new ftp.Client();
+
+  try {
+    await client.access({
+      host: process.env.FTP_HOST,
+      user: process.env.FTP_USER,
+      password: process.env.FTP_PASSWORD,
+      secure: false,
+    });
+
+    const list = await client.list("/");
+    res.json({ rootList: list });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  } finally {
+    client.close();
+  }
+});
 
 // File operations
 router.get("/list", listFilesController);
@@ -38,5 +65,29 @@ router.post(
       });
   }
 );
+// already memory-based 👍
+router.post("/upload-file", memoryUpload.single("file"), uploadFileController);
+// thumbs
+router.delete("/delete-thumbnail", deleteThumbnailController, (req, res) => {
+  if (!req.file) return res.status(400).json({ message: "No file deleted" });
+  res.status(200).json({ message: "Thumbnail deleted" });
+});
+// videos
+router.post(
+  "/upload-video",
+  memoryUpload.single("video"),
+  uploadVideoController,
+  (req, res) => {
+    if (!req.file) return res.status(400).json({ message: "No file uploaded" });
+    res.status(200).json({ message: "Video uploaded" });
+  }
+);
+router.delete("/delete-video", deleteVideoController, (req, res) => {
+  if (!req.file) return res.status(400).json({ message: "No file deleted" });
+  res.status(200).json({ message: "Video deleted" });
+});
+
+// bulk delete
+router.post("/delete-files", deleteFileController);
 
 export default router;

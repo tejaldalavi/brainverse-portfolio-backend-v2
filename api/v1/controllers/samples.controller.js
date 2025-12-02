@@ -5,6 +5,8 @@ import {
   deleteFile,
   extractZip,
   uploadAndExtract,
+  uploadToFTP,
+  deleteFromFTP,
 } from "../services/samples.service.js";
 
 // Base URL for constructing public links if needed
@@ -123,6 +125,105 @@ export const uploadAndExtractController = async (req, res) => {
     res.status(500).json({
       success: false,
       error: err.message || "Something went wrong during upload/extract"
+    });
+  }
+};
+
+// Simple generic upload to any folder (buffer-based)
+export const uploadFileController = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+    const folder = req.body?.folder || "uploads";
+    const data = await uploadToFTP(req.file, folder);
+
+    res.json({
+      success: true,
+      message: "File uploaded successfully",
+      path: data.path,
+      url: `${BASE_PUBLIC_URL}/${data.path}`.replace(/\/{2,}/g, "/")
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to upload file", details: err.message });
+  }
+};
+
+// Delete a single thumbnail file on FTP
+export const deleteThumbnailController = async (req, res) => {
+  try {
+    const { path } = req.query;
+    if (!path) {
+      return res.status(400).json({ error: "Thumbnail path is required" });
+    }
+    const result = await deleteFromFTP({ path, type: "file" });
+
+    res.json({
+      success: true,
+      message: "Thumbnail deleted successfully",
+      ...result
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to delete thumbnail", details: err.message });
+  }
+};
+
+// Video upload: buffer → FTP/videos
+export const uploadVideoController = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "No video uploaded" });
+    }
+
+    const folder = "videos";
+    const data = await uploadToFTP(req.file, folder);
+
+    res.json({
+      success: true,
+      message: "Video uploaded successfully",
+      path: data.path,
+      url: `${BASE_PUBLIC_URL}/${data.path}`.replace(/\/{2,}/g, "/")
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to upload video", details: err.message });
+  }
+};
+
+// Delete a single video file on FTP
+export const deleteVideoController = async (req, res) => {
+  try {
+    const { path } = req.query; // expect ?path=videos/12345-name.mp4
+    if (!path) return res.status(400).json({ error: "Video path is required" });
+
+    const result = await deleteFromFTP({ path, type: "file" });
+    res.json({
+      success: true,
+      message: "Video deleted successfully",
+      ...result
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to delete video", details: err.message });
+  }
+};
+
+// Delete any file or directory — expects JSON: { path, type: "file"|"dir" }
+export const deleteFileController = async (req, res) => {
+  try {
+    const { path, type } = req.body || {};
+    if (!path || !type) {
+      return res.status(400).json({ error: "Body must include { path, type }" });
+    }
+
+    const result = await deleteFromFTP({ path, type });
+    return res.json({
+      success: true,
+      message: type === "dir" ? "Folder deleted successfully" : "File deleted successfully",
+      ...result
+    });
+  } catch (err) {
+    res.status(500).json({
+      error: "Failed to delete",
+      details: err.message
     });
   }
 };

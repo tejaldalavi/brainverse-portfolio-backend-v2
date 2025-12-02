@@ -1,5 +1,5 @@
 import ftp from "basic-ftp";
-// import db from "../config/db.js";
+import db from "../../config/database.js";
 import axios from "axios";
 // import dotenv from "dotenv";
 import FormData from "form-data";
@@ -148,3 +148,75 @@ export const uploadAndExtract = async (file, remoteFileName, folder = "zip") => 
   return { upload: uploadResult, extract: extractResult, deletedZip: deleteResult, };
 };
 
+/**
+ * Generic upload that creates (if needed) a folder and streams the buffer.
+ * Returns the full remote path.
+ */
+export const uploadToFTP = async (file, folder) => {
+  const client = new ftp.Client();
+  const timestamp = Date.now();
+  const originalName = file.originalname;
+  const savedName = `${timestamp}-${originalName}`;
+
+  try {
+    await client.access({
+      host: process.env.FTP_HOST,
+      user: process.env.FTP_USER,
+      password: process.env.FTP_PASSWORD,
+      secure: false,
+    });
+
+    await client.cd("/");
+    await client.cd(folder); // e.g., thumbnails
+
+    await client.uploadFrom(Readable.from(file.buffer), savedName);
+
+    return {
+      path: `${folder}/${savedName}`
+    };
+
+  } catch (err) {
+    console.error("FTP Upload Error:", err);
+    throw new Error("Failed to upload file: " + err.message);
+  } finally {
+    client.close();
+  }
+};
+
+export const deleteFromFTP = async ({ path, type }) => {
+  const client = new ftp.Client();
+  try {
+    await client.access({
+      host: process.env.FTP_HOST,
+      user: process.env.FTP_USER,
+      password: process.env.FTP_PASSWORD,
+      secure: false,
+    });
+
+    if (type === "dir") {
+      await client.removeDir(path);
+    } else if (type === "file") {
+      await client.remove(path);
+    }
+    return { deletedFolder: path };
+  } catch (err) {
+    console.error("FTP Delete Error:", err);
+    throw err;
+  } finally {
+    client.close();
+  }
+};
+
+export const createSample = async ({
+  sampleType,
+  category,
+  thumbnail,
+  fileUrl,
+  display,
+}) => {
+  const [result] = await db.query(
+    "INSERT INTO samples (sampleType, category, thumbnail, fileUrl, display, createdAt) VALUES (?, ?, ?, ?, ?, NOW())",
+    [sampleType, category, thumbnail, fileUrl, display]
+  );
+  return result;
+};
