@@ -7,36 +7,58 @@ dotenv.config();
 
 const app = express();
 
-app.use(express.json());
-app.use(morgan("combined"));
-app.use(express.urlencoded({ extended: true }));
+// app.use(express.json());
+// app.use(morgan("combined"));
+// app.use(express.urlencoded({ extended: true }));
 
 var whitelist = [
     "http://localhost:5173",
-    "http://127.0.0.1:5173/",
+    // "http://127.0.0.1:5173/",
     "http://127.0.0.1:5173",
-    "http://localhost:3306",
+    // "http://localhost:3306",
     "http://localhost:3307",
-    "http://localhost:3000",
+    // "http://localhost:3000",
     "https://ecorner-admin-frontend.vercel.app",
     "https://bold-moon-180173.postman.co/",
     "https://brainverse-portfolio-backend-v2.vercel.app",
     "https://brainverse-portfolio.vercel.app",
 ];
 
+// app.use(
+//     cors({
+//         origin: (origin, callback) => {
+//             if (!origin) return callback(null, true);
+//             if (whitelist.indexOf(origin) === -1) {
+//                 const msg =
+//                     "The CORS policy for this site does not allow access from the specified Origin.";
+//                 return callback(new Error(msg), false);
+//             }
+//             return callback(null, true);
+//         },
+//     })
+// );
+
+
 app.use(
-    cors({
-        origin: (origin, callback) => {
-            if (!origin) return callback(null, true);
-            if (whitelist.indexOf(origin) === -1) {
-                const msg =
-                    "The CORS policy for this site does not allow access from the specified Origin.";
-                return callback(new Error(msg), false);
-            }
-            return callback(null, true);
-        },
-    })
+  cors({
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+
+      if (whitelist.some((url) => origin.startsWith(url))) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("Not allowed by CORS"), false);
+    },
+    credentials: true,
+  })
 );
+// allow all OPTIONS preflight
+app.options("*", cors());
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(morgan("combined"));
 
 import sampleRoutes from "./api/v1/routes/samples.routes.js";
 import registerRoute from "./api/v1/routes/authresisterRoutes.js";
