@@ -26,6 +26,8 @@ export const createFtpClient = async () => {
 
 export const listFiles = async () => {
   const client = await createFtpClient();
+  console.log("client", client);
+  
   try {
     const root = process.env.FTP_ROOT || "/";
     await client.cd(root);
